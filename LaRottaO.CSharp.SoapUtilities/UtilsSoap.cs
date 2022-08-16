@@ -21,10 +21,15 @@ namespace LaRottaO.CSharp.SoapUtilities
         /// </summary>
         ///
 
-        public Task<SoapResponse> executeRequest(String argEndpointUrl, List<String[]> argHeadersList, StringBuilder argXmlRequestBody, Boolean argIncludeRequestOnResponse = true, String argHttpMethod = "POST")
+        public Task<SoapResponse> executeRequest(String argEndpointUrl, List<String[]> argHeadersList, StringBuilder argXmlRequestBody, Boolean argIncludeRequestOnResponse = true, String argHttpMethod = "POST", int argTimeout = 40000)
         {
             return Task.Run(() =>
             {
+                StringBuilder additionalData = new StringBuilder();
+
+                HttpWebResponse myHttpWebResponse = null;
+                StreamReader readStream = null;
+
                 try
                 {
                     Tuple<Boolean, String, XmlDocument> xmlEnelopeCreationResult = CreateSoapEnvelope(argXmlRequestBody.ToString());
@@ -44,12 +49,17 @@ namespace LaRottaO.CSharp.SoapUtilities
                     httpWebRequest.Accept = "text/xml";
                     httpWebRequest.Method = argHttpMethod;
 
+                    httpWebRequest.CookieContainer = new CookieContainer();
+                    httpWebRequest.KeepAlive = true;
+                    httpWebRequest.Timeout = argTimeout;
+
                     /*******************************************************************/
                     // Additional headers the user may want to add
                     /*******************************************************************/
 
                     foreach (String[] header in argHeadersList)
                     {
+                        additionalData.Append(additionalData + header[0] + ":" + header[1] + Environment.NewLine);
                         httpWebRequest.Headers.Add(header[0], header[1]);
                     }
 
@@ -60,31 +70,103 @@ namespace LaRottaO.CSharp.SoapUtilities
                         return new SoapResponse(false, 500, insertSoapEnvelopeResult.Item2);
                     }
 
-                    IAsyncResult asyncResult = httpWebRequest.BeginGetResponse(null, null);
+                    /*
 
-                    asyncResult.AsyncWaitHandle.WaitOne();
+                        IAsyncResult asyncResult = httpWebRequest.BeginGetResponse(null, null);
 
-                    using (WebResponse webResponse = httpWebRequest.EndGetResponse(asyncResult))
+                        asyncResult.AsyncWaitHandle.WaitOne();
 
-                    {
-                        String responseBody = "";
+                        using (WebResponse webResponse = httpWebRequest.EndGetResponse(asyncResult))
 
-                        using (StreamReader rd = new StreamReader(webResponse.GetResponseStream()))
                         {
-                            responseBody = rd.ReadToEnd();
-                        }
+                              String responseBody = "";
 
-                        if (argIncludeRequestOnResponse)
-                        {
-                            responseBody = "<URL>" + Environment.NewLine + argEndpointUrl + Environment.NewLine + "</URL>" + Environment.NewLine + "<REQUEST>" + Environment.NewLine + argXmlRequestBody.ToString() + Environment.NewLine + "</REQUEST>" + Environment.NewLine + "<RESPONSE>" + Environment.NewLine + responseBody + Environment.NewLine + "</RESPONSE>";
-                        }
+                            using (StreamReader rd = new StreamReader(webResponse.GetResponseStream()))
+                            {
+                                responseBody = rd.ReadToEnd();
+                            }
 
-                        return new SoapResponse(true, 200, responseBody);
+                            if (argIncludeRequestOnResponse)
+                            {
+                                responseBody = "<URL>" + Environment.NewLine + argEndpointUrl + Environment.NewLine + "</URL>" + Environment.NewLine + "<REQUEST>" + Environment.NewLine + argXmlRequestBody.ToString() + Environment.NewLine + "</REQUEST>" + Environment.NewLine + "<RESPONSE>" + Environment.NewLine + responseBody + Environment.NewLine + "</RESPONSE>";
+                            }
+
+                            return new SoapResponse(true, 200, responseBody);
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        return new SoapResponse(false, 500, ex.ToString());
+                    }*/
+
+                    //if (argIncludeRequestOnResponse)
+                    //{
+                    additionalData.Append(argXmlRequestBody.ToString() + Environment.NewLine + Environment.NewLine);
+                    //}
+
+                    // Sends the HttpWebRequest and waits for a response.
+
+                    myHttpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+
+                    if (myHttpWebResponse.StatusCode != HttpStatusCode.OK)
+                    {
+                        return new SoapResponse(false, 500, additionalData + myHttpWebResponse.StatusDescription);
+                    }
+
+                    Console.WriteLine("\r\nResponse Status Code is OK and StatusDescription is: {0}", myHttpWebResponse.StatusDescription);
+
+                    StringBuilder responseBody = new StringBuilder();
+
+                    // Gets the stream associated with the response.
+                    Stream receiveStream = myHttpWebResponse.GetResponseStream();
+                    Encoding encode = System.Text.Encoding.GetEncoding("utf-8");
+
+                    // Pipes the stream to a higher level stream reader with the required encoding format.
+                    readStream = new StreamReader(receiveStream, encode);
+
+                    Console.WriteLine("\r\nResponse stream received.");
+
+                    Char[] read = new Char[256];
+
+                    // Reads 256 characters at a time.
+                    int count = readStream.Read(read, 0, 256);
+
+                    while (count > 0)
+                    {
+                        // Dumps the 256 characters on a string and displays the string to the console.
+
+                        String str = new String(read, 0, count);
+
+                        responseBody.Append(str);
+
+                        count = readStream.Read(read, 0, 256);
+                    }
+
+                    return new SoapResponse(true, 200, additionalData + responseBody.ToString());
                 }
-                catch (Exception ex)
+                catch (WebException e)
                 {
-                    return new SoapResponse(false, 500, ex.ToString());
+                    return new SoapResponse(true, 401, additionalData + " " + e.Status + " " + e.Message);
+                }
+                catch (Exception e)
+                {
+                    return new SoapResponse(true, 401, additionalData + " " + e.Message);
+                }
+                finally
+                {
+                    // Releases the resources of the response.
+
+                    if (myHttpWebResponse != null)
+                    {
+                        myHttpWebResponse.Close();
+                    }
+
+                    // Releases the resources of the Stream.
+
+                    if (readStream != null)
+                    {
+                        readStream.Close();
+                    }
                 }
             });
         }

@@ -5,7 +5,12 @@
       "ProjectGuid": "947a7ca3-905c-453f-a1a8-fc90dc22c6dd",
       "DisplayName": "LaRottaO.CSharp.SoapUtilities",
       "ColorIndex": 0
+    },
+    "a6f2435d-7223-4a1e-b3ca-e979be65ad74": {
+      "ProjectGuid": "a6f2435d-7223-4a1e-b3ca-e979be65ad74",
+      "DisplayName": "LaRottaO.CSharp.PingUtilities",
+      "ColorIndex": 1
     }
   },
-  "NextColorIndex": 1
+  "NextColorIndex": 2
 }
