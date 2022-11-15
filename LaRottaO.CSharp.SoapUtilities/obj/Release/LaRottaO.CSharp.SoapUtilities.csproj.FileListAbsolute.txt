@@ -1,0 +1,6 @@
+C:\Repositorios\LaRottaO.CSharp.Utils.Soap\LaRottaO.CSharp.SoapUtilities\bin\Release\LaRottaO.CSharp.SoapUtilities.dll
+C:\Repositorios\LaRottaO.CSharp.Utils.Soap\LaRottaO.CSharp.SoapUtilities\bin\Release\LaRottaO.CSharp.SoapUtilities.pdb
+C:\Repositorios\LaRottaO.CSharp.Utils.Soap\LaRottaO.CSharp.SoapUtilities\obj\Release\LaRottaO.CSharp.SoapUtilities.csproj.AssemblyReference.cache
+C:\Repositorios\LaRottaO.CSharp.Utils.Soap\LaRottaO.CSharp.SoapUtilities\obj\Release\LaRottaO.CSharp.SoapUtilities.csproj.CoreCompileInputs.cache
+C:\Repositorios\LaRottaO.CSharp.Utils.Soap\LaRottaO.CSharp.SoapUtilities\obj\Release\LaRottaO.CSharp.SoapUtilities.dll
+C:\Repositorios\LaRottaO.CSharp.Utils.Soap\LaRottaO.CSharp.SoapUtilities\obj\Release\LaRottaO.CSharp.SoapUtilities.pdb

@@ -21,10 +21,9 @@ namespace LaRottaO.CSharp.SoapUtilities
         /// </summary>
         ///
 
-        public Task<SoapResponse> executeRequest(String argEndpointUrl, List<String[]> argHeadersList, StringBuilder argXmlRequestBody, Boolean argIncludeRequestOnResponse = true, String argHttpMethod = "POST", int argTimeout = 40000)
+        public async Task<SoapResponse> executeRequest(String argEndpointUrl, List<String[]> argHeadersList, StringBuilder argXmlRequestBody, Boolean argIncludeRequestOnResponse = true, String argHttpMethod = "POST", int argTimeout = 40000, Boolean showDebug = false)
         {
-            return Task.Run(() =>
-            {
+          
                 StringBuilder additionalData = new StringBuilder();
 
                 HttpWebResponse myHttpWebResponse = null;
@@ -113,8 +112,6 @@ namespace LaRottaO.CSharp.SoapUtilities
                         return new SoapResponse(false, 500, additionalData + myHttpWebResponse.StatusDescription);
                     }
 
-                    Console.WriteLine("\r\nResponse Status Code is OK and StatusDescription is: {0}", myHttpWebResponse.StatusDescription);
-
                     StringBuilder responseBody = new StringBuilder();
 
                     // Gets the stream associated with the response.
@@ -123,8 +120,6 @@ namespace LaRottaO.CSharp.SoapUtilities
 
                     // Pipes the stream to a higher level stream reader with the required encoding format.
                     readStream = new StreamReader(receiveStream, encode);
-
-                    Console.WriteLine("\r\nResponse stream received.");
 
                     Char[] read = new Char[256];
 
@@ -142,14 +137,16 @@ namespace LaRottaO.CSharp.SoapUtilities
                         count = readStream.Read(read, 0, 256);
                     }
 
+                    if (showDebug)
+                    {
+                        Console.WriteLine(additionalData + responseBody.ToString());
+                    }
+
                     return new SoapResponse(true, 200, additionalData + responseBody.ToString());
-                }
-                catch (WebException e)
-                {
-                    return new SoapResponse(true, 401, additionalData + " " + e.Status + " " + e.Message);
                 }
                 catch (Exception e)
                 {
+                    Console.WriteLine(additionalData + " " + e.Message);
                     return new SoapResponse(true, 401, additionalData + " " + e.Message);
                 }
                 finally
@@ -168,7 +165,7 @@ namespace LaRottaO.CSharp.SoapUtilities
                         readStream.Close();
                     }
                 }
-            });
+           
         }
 
         private static Tuple<Boolean, String, XmlDocument> CreateSoapEnvelope(String textoXmlRequest)
