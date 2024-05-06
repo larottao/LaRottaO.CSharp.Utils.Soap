@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LaRottaO.CSharp.SoapUtilities.Models;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -22,7 +23,7 @@ namespace LaRottaO.CSharp.SoapUtilities
         /// </summary>
         ///
 
-        public async Task<SoapResponse> executeRequest(String argEndpointUrl, List<String[]> argHeadersList, StringBuilder argXmlRequestBody, Boolean argIncludeRequestOnResponse = true, String argHttpMethod = "POST", int argTimeout = 40000, Boolean showDebug = true)
+        public Task<SoapResponse> executeRequest(SoapRequest request)
         {
             StringBuilder additionalData = new StringBuilder();
 
@@ -31,14 +32,14 @@ namespace LaRottaO.CSharp.SoapUtilities
 
             try
             {
-                Tuple<Boolean, String, XmlDocument> xmlEnelopeCreationResult = CreateSoapEnvelope(argXmlRequestBody.ToString());
+                Tuple<Boolean, String, XmlDocument> xmlEnelopeCreationResult = createSoapEnvelope(request.xmlRequestBody.ToString());
 
                 if (!xmlEnelopeCreationResult.Item1)
                 {
-                    return new SoapResponse(false, 400, xmlEnelopeCreationResult.Item2);
+                    return Task.FromResult(new SoapResponse(false, 400, xmlEnelopeCreationResult.Item2));
                 }
 
-                HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(argEndpointUrl);
+                HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(request.endpointUrl);
 
                 /*******************************************************************/
                 // Headers by default
@@ -46,17 +47,17 @@ namespace LaRottaO.CSharp.SoapUtilities
 
                 httpWebRequest.ContentType = "text/xml;charset=\"utf-8\"";
                 httpWebRequest.Accept = "text/xml";
-                httpWebRequest.Method = argHttpMethod;
+                httpWebRequest.Method = request.httpMethod;
 
                 httpWebRequest.CookieContainer = new CookieContainer();
                 httpWebRequest.KeepAlive = true;
-                httpWebRequest.Timeout = argTimeout;
+                httpWebRequest.Timeout = request.timeout;
 
                 /*******************************************************************/
                 // Additional headers the user may want to add
                 /*******************************************************************/
 
-                foreach (String[] header in argHeadersList)
+                foreach (String[] header in request.headersList)
                 {
                     additionalData.Append(additionalData + header[0] + ":" + header[1] + Environment.NewLine);
                     httpWebRequest.Headers.Add(header[0], header[1]);
@@ -66,16 +67,16 @@ namespace LaRottaO.CSharp.SoapUtilities
 
                 if (!insertSoapEnvelopeResult.Item1)
                 {
-                    return new SoapResponse(false, 500, insertSoapEnvelopeResult.Item2);
+                    return Task.FromResult(new SoapResponse(false, 500, insertSoapEnvelopeResult.Item2));
                 }
 
-                additionalData.Append(argXmlRequestBody.ToString() + Environment.NewLine + Environment.NewLine);
+                additionalData.Append(request.xmlRequestBody.ToString() + Environment.NewLine + Environment.NewLine);
 
                 myHttpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
 
                 if (myHttpWebResponse.StatusCode != HttpStatusCode.OK)
                 {
-                    return new SoapResponse(false, 500, additionalData + myHttpWebResponse.StatusDescription);
+                    return Task.FromResult(new SoapResponse(false, 500, additionalData + myHttpWebResponse.StatusDescription));
                 }
 
                 StringBuilder responseBody = new StringBuilder();
@@ -96,17 +97,17 @@ namespace LaRottaO.CSharp.SoapUtilities
                     count = readStream.Read(read, 0, 256);
                 }
 
-                if (showDebug)
+                if (request.showDebug)
                 {
                     Debug.WriteLine(additionalData + responseBody.ToString());
                 }
 
-                return new SoapResponse(true, 200, additionalData + responseBody.ToString());
+                return Task.FromResult(new SoapResponse(true, 200, additionalData + responseBody.ToString()));
             }
             catch (Exception e)
             {
                 Debug.WriteLine(additionalData + " " + e.Message);
-                return new SoapResponse(true, 401, additionalData + " " + e.Message);
+                return Task.FromResult(new SoapResponse(true, 401, additionalData + " " + e.Message));
             }
             finally
             {
@@ -122,7 +123,7 @@ namespace LaRottaO.CSharp.SoapUtilities
             }
         }
 
-        private static Tuple<Boolean, String, XmlDocument> CreateSoapEnvelope(String textoXmlRequest)
+        private static Tuple<Boolean, String, XmlDocument> createSoapEnvelope(String textoXmlRequest)
         {
             try
             {

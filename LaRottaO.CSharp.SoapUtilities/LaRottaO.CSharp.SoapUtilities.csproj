@@ -41,7 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SoapResponse.cs" />
+    <Compile Include="Models\SoapRequest.cs" />
+    <Compile Include="Models\SoapResponse.cs" />
     <Compile Include="UtilsSoap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
