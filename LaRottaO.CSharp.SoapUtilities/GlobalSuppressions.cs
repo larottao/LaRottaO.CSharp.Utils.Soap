@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Minor Code Smell", "S4663:Comments should not be empty", Justification = "<Pending>", Scope = "member", Target = "~M:LaRottaO.CSharp.SoapUtilities.UtilsSoap.executeRequest(LaRottaO.CSharp.SoapUtilities.Models.SoapRequest)~System.Threading.Tasks.Task{LaRottaO.CSharp.SoapUtilities.SoapResponse}")]
+[assembly: SuppressMessage("Minor Code Smell", "S4663:Comments should not be empty", Justification = "<Pending>", Scope = "member", Target = "~M:LaRottaO.CSharp.SoapUtilities.UtilsSoap.executeRequest(LaRottaO.CSharp.SoapUtilities.Models.SoapRequest)~LaRottaO.CSharp.SoapUtilities.SoapResponse")]

@@ -23,9 +23,9 @@ namespace LaRottaO.CSharp.SoapUtilities
         /// </summary>
         ///
 
-        public Task<SoapResponse> executeRequest(SoapRequest request)
+        public SoapResponse executeRequest(SoapRequest request)
         {
-            StringBuilder additionalData = new StringBuilder();
+            StringBuilder debugData = new StringBuilder();
 
             HttpWebResponse myHttpWebResponse = null;
             StreamReader readStream = null;
@@ -36,7 +36,7 @@ namespace LaRottaO.CSharp.SoapUtilities
 
                 if (!xmlEnelopeCreationResult.Item1)
                 {
-                    return Task.FromResult(new SoapResponse(false, 400, xmlEnelopeCreationResult.Item2));
+                    return new SoapResponse(false, 400, xmlEnelopeCreationResult.Item2);
                 }
 
                 HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(request.endpointUrl);
@@ -59,24 +59,24 @@ namespace LaRottaO.CSharp.SoapUtilities
 
                 foreach (String[] header in request.headersList)
                 {
-                    additionalData.Append(additionalData + header[0] + ":" + header[1] + Environment.NewLine);
                     httpWebRequest.Headers.Add(header[0], header[1]);
+                    debugData.Append(debugData + header[0] + ":" + header[1] + Environment.NewLine);
                 }
 
                 Tuple<Boolean, String> insertSoapEnvelopeResult = InsertSoapEnvelopeIntoWebRequest(xmlEnelopeCreationResult.Item3, httpWebRequest);
 
                 if (!insertSoapEnvelopeResult.Item1)
                 {
-                    return Task.FromResult(new SoapResponse(false, 500, insertSoapEnvelopeResult.Item2));
+                    return new SoapResponse(false, 500, insertSoapEnvelopeResult.Item2);
                 }
 
-                additionalData.Append(request.xmlRequestBody.ToString() + Environment.NewLine + Environment.NewLine);
+                debugData.Append(request.xmlRequestBody.ToString() + Environment.NewLine + Environment.NewLine);
 
                 myHttpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
 
                 if (myHttpWebResponse.StatusCode != HttpStatusCode.OK)
                 {
-                    return Task.FromResult(new SoapResponse(false, 500, additionalData + myHttpWebResponse.StatusDescription));
+                    return new SoapResponse(false, 500, debugData + myHttpWebResponse.StatusDescription);
                 }
 
                 StringBuilder responseBody = new StringBuilder();
@@ -99,15 +99,15 @@ namespace LaRottaO.CSharp.SoapUtilities
 
                 if (request.showDebug)
                 {
-                    Debug.WriteLine(additionalData + responseBody.ToString());
+                    Debug.WriteLine(debugData + responseBody.ToString());
                 }
 
-                return Task.FromResult(new SoapResponse(true, 200, additionalData + responseBody.ToString()));
+                return new SoapResponse(true, 200, debugData + responseBody.ToString());
             }
             catch (Exception e)
             {
-                Debug.WriteLine(additionalData + " " + e.Message);
-                return Task.FromResult(new SoapResponse(true, 401, additionalData + " " + e.Message));
+                Debug.WriteLine(debugData + " " + e.Message);
+                return new SoapResponse(false, 401, debugData + " " + e.Message);
             }
             finally
             {
